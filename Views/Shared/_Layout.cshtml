@@ -1,0 +1,857 @@
+@using SecureAuthPortal.Data
+@inject ApplicationDbContext DbContext
+@using System.Text.Json
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1" />
+
+    <title>SecureAuthPortal</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- GOOGLE FONT -->
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <style>
+
+        * {
+            font-family: 'Poppins', sans-serif;
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        /* ===== DARK MODE VARIABLES ===== */
+        :root {
+            --bg-overlay-1: #102b42;
+            --bg-overlay-2: #285072;
+            --navbar-bg: rgba(17,42,64,0.92);
+            --card-bg: rgba(255,255,255,0.95);
+            --card-color: #333;
+            --toast-icon: '☀️';
+        }
+
+        body.dark-mode {
+            --bg-overlay-1: #050a14;
+            --bg-overlay-2: #121c30;
+            --navbar-bg: rgba(5,10,18,0.96);
+            --card-bg: rgba(18,28,48,0.97);
+            --card-color: #e0e8ff;
+        }
+
+        body
+        {
+            background: linear-gradient(135deg, var(--bg-overlay-1), var(--bg-overlay-2));
+
+            background-size: cover;
+
+            background-position: center;
+
+            background-repeat: no-repeat;
+
+            background-attachment: fixed;
+
+            min-height: 100vh;
+        }
+
+        /* ===== PAGE ENTRANCE ANIMATION ===== */
+        .page-enter {
+            animation: pageEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        @@keyframes pageEnter {
+            from { opacity: 0; transform: translateY(28px); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar
+        {
+            background: var(--navbar-bg);
+
+            backdrop-filter: blur(10px);
+
+            border-bottom:
+                1px solid rgba(255,255,255,0.08);
+
+            padding-top: 14px;
+
+            padding-bottom: 14px;
+        }
+
+        .navbar-brand
+        {
+            color: white !important;
+
+            font-size: 26px;
+
+            font-weight: 700;
+
+            letter-spacing: 0.5px;
+        }
+
+        .navbar-brand i {
+            color: #5da8e0;
+            margin-right: 6px;
+        }
+
+        .nav-link
+        {
+            color:
+                rgba(255,255,255,0.88) !important;
+
+            font-weight: 500;
+
+            margin-left: 4px;
+
+            transition: color 0.25s, transform 0.25s !important;
+
+            border-radius: 8px;
+
+            padding: 6px 14px !important;
+        }
+
+        .nav-link:hover
+        {
+            color: white !important;
+
+            transform: translateY(-1px);
+
+            background: rgba(255,255,255,0.08);
+        }
+
+        /* Active nav link highlight */
+        .nav-link.active-page {
+            color: white !important;
+            background: rgba(255,255,255,0.15);
+            border-bottom: 2px solid #5da8e0;
+        }
+
+        /* ===== DARK MODE TOGGLE BUTTON ===== */
+        #darkModeToggle {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: white;
+            border-radius: 50px;
+            padding: 5px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s !important;
+            margin-left: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #darkModeToggle:hover {
+            background: rgba(255,255,255,0.22);
+            transform: scale(1.05);
+        }
+
+        /* ===== CARD ===== */
+        .card
+        {
+            background: var(--card-bg);
+
+            backdrop-filter: blur(8px);
+
+            border: none;
+
+            border-radius: 25px;
+
+            box-shadow:
+                0px 20px 60px rgba(0,0,0,0.35);
+
+            color: var(--card-color);
+        }
+
+        /* ===== CUSTOM BRANDED TOAST ===== */
+        #liveToast {
+            border-radius: 16px !important;
+            overflow: hidden;
+            background: linear-gradient(135deg, #183B56, #285072) !important;
+            color: white !important;
+            border: none !important;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35) !important;
+            min-width: 300px;
+        }
+
+        #liveToast .toast-body {
+            font-weight: 600;
+            font-size: 14px;
+            padding-left: 45px;
+            position: relative;
+        }
+
+        #liveToast .toast-body::before {
+            font-family: "Font Awesome 6 Free";
+            position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
+            font-size: 18px;
+        }
+
+        #liveToast .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        /* Toast types */
+        #liveToast.toast-success { background: linear-gradient(135deg, #28a745, #20c997) !important; }
+        #liveToast.toast-success .toast-body::before { content: '\f058'; font-weight: 900; } /* fa-check-circle */
+
+        #liveToast.toast-error { background: linear-gradient(135deg, #dc3545, #c82333) !important; }
+        #liveToast.toast-error .toast-body::before { content: '\f071'; font-weight: 900; } /* fa-exclamation-triangle */
+
+        #liveToast.toast-info { background: linear-gradient(135deg, #183B56, #285072) !important; }
+        #liveToast.toast-info .toast-body::before { content: '\f05a'; font-weight: 900; } /* fa-info-circle */
+
+        #liveToast.toast-warning { background: linear-gradient(135deg, #ffc107, #ff9800) !important; color: #333 !important; }
+        #liveToast.toast-warning .toast-body::before { content: '\f06a'; font-weight: 900; } /* fa-exclamation-circle */
+        #liveToast.toast-warning .btn-close { filter: none; }
+
+        /* ===== MAIN CONTAINER ===== */
+        .main-container
+        {
+            margin-top: 20px;
+        }
+
+        /* ===== SCROLL PROGRESS BAR ===== */
+        #scrollProgressBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 0%;
+            background: linear-gradient(90deg, #5da8e0, #183B56, #5da8e0);
+            background-size: 200% auto;
+            z-index: 10000;
+            transition: width 0.1s linear;
+            animation: shimmer 2s linear infinite;
+        }
+
+        @@keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        /* ===== BACK TO TOP BUTTON ===== */
+        #backToTop {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #183B56, #285072);
+            color: white;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 24px rgba(24,59,86,0.45);
+            z-index: 9998;
+            transition: all 0.3s;
+        }
+
+        #backToTop:hover {
+            transform: translateY(-4px) scale(1.1);
+            box-shadow: 0 12px 32px rgba(24,59,86,0.55);
+        }
+
+        /* ===== USER AVATAR ===== */
+        .user-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #5da8e0, #285072);
+            color: white;
+            font-weight: 700;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255,255,255,0.35);
+            flex-shrink: 0;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== SESSION TIMEOUT MODAL ===== */
+        #sessionModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .session-box {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+            animation: fadeSlideUp 0.3s ease;
+        }
+
+        @@keyframes fadeSlideUp {
+            from { opacity:0; transform:translateY(20px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+
+        .session-header {
+            background: linear-gradient(135deg, #f57c00, #e65100);
+            color: white;
+            padding: 20px 24px;
+        }
+
+        .session-header h5 { margin:0; font-weight:700; }
+
+        .session-body { padding: 24px; }
+
+        .session-countdown {
+            font-size: 48px;
+            font-weight: 700;
+            color: #e65100;
+            text-align: center;
+            line-height: 1;
+            margin: 12px 0;
+        }
+
+        .session-footer {
+            padding: 0 24px 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 260px;
+            background: var(--navbar-bg);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255,255,255,0.08);
+            z-index: 1040;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .sidebar-header .navbar-brand {
+            font-size: 20px !important;
+            white-space: nowrap;
+        }
+
+        .sidebar-menu {
+            padding: 20px 15px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .sidebar-link {
+            color: rgba(255,255,255,0.88) !important;
+            font-weight: 500;
+            padding: 12px 16px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            margin-bottom: 8px;
+            transition: all 0.25s !important;
+        }
+
+        .sidebar-link i {
+            width: 24px;
+            text-align: center;
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-link:hover {
+            color: white !important;
+            background: rgba(255,255,255,0.08);
+            transform: translateX(4px);
+        }
+
+        .sidebar-link.active-page {
+            color: white !important;
+            background: rgba(255,255,255,0.15);
+            border-left: 4px solid #5da8e0;
+        }
+
+        /* ===== MAIN WRAPPER ===== */
+        .main-wrapper {
+            margin-left: 260px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .main-wrapper.no-sidebar {
+            margin-left: 0 !important;
+        }
+
+        .hamburger-menu {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: none;
+            padding: 0;
+        }
+
+        @@media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .main-wrapper {
+                margin-left: 0;
+            }
+            .hamburger-menu {
+                display: block;
+            }
+        }
+        
+        /* Backdrop for mobile sidebar */
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1035;
+            backdrop-filter: blur(2px);
+        }
+        .sidebar-backdrop.show {
+            display: block;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    @{
+        bool isLoggedIn = Context.Session.GetString("Username") != null;
+    }
+
+    @if(isLoggedIn)
+    {
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+        <aside class="sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <a class="navbar-brand" asp-area="" asp-controller="Account" asp-action="Dashboard">
+                    <i class="fa-solid fa-shield-halved"></i>SecureAuthPortal
+                </a>
+            </div>
+            <div class="sidebar-menu">
+                @{
+                    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+                    var currentAction     = ViewContext.RouteData.Values["action"]?.ToString();
+                    var currentArea       = ViewContext.RouteData.Values["area"]?.ToString();
+                }
+
+                @if (!(currentController == "Account" && currentAction == "Dashboard"))
+                {
+                    <a class="sidebar-link" asp-area="" asp-controller="Account" asp-action="Dashboard">
+                        <i class="fa-solid fa-house"></i>Home
+                    </a>
+                }
+
+                @if (Context.Session.GetString("Role") != "Admin" &&
+                     !(currentController == "Document" && currentAction == "Upload"))
+                {
+                    <a class="sidebar-link" asp-area="" asp-controller="Document" asp-action="Upload">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>Upload Document
+                    </a>
+                }
+
+                @if (Context.Session.GetString("Role") == "Admin")
+                {
+                    var pendingDocs = 0;
+                    try
+                    {
+                        pendingDocs = DbContext.DocumentMaster.Count(d => d.Status == "Pending");
+                    }
+                    catch
+                    {
+                        pendingDocs = 0;
+                    }
+
+                    @if (!(currentController == "Account" && currentAction == "UserList"))
+                    {
+                        <a class="sidebar-link" asp-area="" asp-controller="Account" asp-action="UserList">
+                            <i class="fa-solid fa-tachometer-alt"></i>User List
+                        </a>
+                    }
+
+                    @if (!(currentArea == "Admin" && currentController == "Role"))
+                    {
+                        <a class="sidebar-link" asp-area="Admin" asp-controller="Role" asp-action="Index">
+                            <i class="fa-solid fa-user-shield"></i>Manage Roles
+                        </a>
+                    }
+
+                    @if (!(currentController == "Document" && currentAction == "PendingApprovals"))
+                    {
+                        <a class="sidebar-link" style="position:relative;" asp-area="" asp-controller="Document" asp-action="PendingApprovals">
+                            <i class="fa-solid fa-file-circle-check"></i>Pending Docs
+                            @if (pendingDocs > 0)
+                            {
+                                <span class="badge bg-danger" style="position:absolute; right:15px; top:50%; transform:translateY(-50%);">@pendingDocs</span>
+                            }
+                        </a>
+                    }
+
+                    @if (!(currentArea == "Admin" && currentController == "ActivityLog"))
+                    {
+                        <a class="sidebar-link" asp-area="Admin" asp-controller="ActivityLog" asp-action="Index">
+                            <i class="fa-solid fa-list-check"></i>Activity Log
+                        </a>
+                    }
+
+                    @if (!(currentArea == "Admin" && currentController == "ErrorLog"))
+                    {
+                        <a class="sidebar-link" asp-area="Admin" asp-controller="ErrorLog" asp-action="Index">
+                            <i class="fa-solid fa-triangle-exclamation"></i>Error Log
+                        </a>
+                    }
+                }
+            </div>
+        </aside>
+    }
+
+    <div class="main-wrapper @(isLoggedIn ? "" : "no-sidebar")" id="mainWrapper">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container-fluid">
+                
+                @if(isLoggedIn)
+                {
+                    <button class="hamburger-menu" id="hamburgerMenu">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <a class="navbar-brand d-lg-none ms-3" asp-area="" asp-controller="Account" asp-action="Dashboard" style="font-size: 20px;">
+                        <i class="fa-solid fa-shield-halved"></i>SecureAuthPortal
+                    </a>
+                }
+                else
+                {
+                    <a class="navbar-brand ms-3" asp-area="" asp-controller="Account" asp-action="Login">
+                        <i class="fa-solid fa-shield-halved"></i>SecureAuthPortal
+                    </a>
+                }
+
+                <ul class="navbar-nav ms-auto flex-row align-items-center mb-0">
+                    @if(!isLoggedIn)
+                    {
+                        <li class="nav-item ms-2">
+                            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Login" ? "active-page" : "")" asp-area="" asp-controller="Account" asp-action="Login">
+                                <i class="fa-solid fa-right-to-bracket me-1 d-none d-sm-inline"></i>Login
+                            </a>
+                        </li>
+                        <li class="nav-item ms-2">
+                            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Register" ? "active-page" : "")" asp-area="" asp-controller="Account" asp-action="Register">
+                                <i class="fa-solid fa-user-plus me-1 d-none d-sm-inline"></i>Register
+                            </a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item d-flex align-items-center gap-2 ms-3">
+                            @{
+                                var uname = Context.Session.GetString("Username") ?? "?";
+                                var initials = uname.Length >= 2 ? uname.Substring(0,2).ToUpper() : uname.ToUpper();
+                            }
+                            <div class="user-avatar" title="@uname">@initials</div>
+                            <a class="nav-link ps-1" href="#" onclick="document.getElementById('logoutModal').style.display='flex'; return false;">
+                                <i class="fa-solid fa-right-from-bracket me-1 d-none d-sm-inline"></i>Logout
+                            </a>
+                        </li>
+                    }
+
+                    <li class="nav-item ms-3">
+                        <button id="darkModeToggle" onclick="toggleDarkMode()">
+                            <i class="fa-solid fa-moon" id="darkModeIcon"></i>
+                            <span id="darkModeLabel" class="d-none d-sm-inline">Dark</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Scroll Progress Bar -->
+        <div id="scrollProgressBar"></div>
+
+        <!-- Back To Top -->
+        <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">
+            <i class="fa-solid fa-chevron-up"></i>
+        </button>
+
+        <div class="container main-container page-enter">
+            @RenderBody()
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    @await RenderSectionAsync("Modals", required: false)
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+
+        // ===== TOAST API =====
+        function showToast(message, type = 'info') {
+            var toastEl = document.getElementById('liveToast');
+            var toastBody = toastEl.querySelector('.toast-body');
+
+            if (toastEl && toastBody) {
+                toastBody.textContent = message;
+
+                // Reset classes and apply new type
+                toastEl.className = 'toast align-items-center border-0'; // Reset
+                toastEl.classList.add(`toast-${type}`);
+
+                var toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+                toast.show();
+            }
+        }
+
+        // Backwards compatibility for TempData
+        document.addEventListener('DOMContentLoaded', function() {
+            const successMessage = @Json.Serialize(TempData["Success"]?.ToString());
+            const errorMessage = @Json.Serialize(TempData["Error"]?.ToString());
+
+            if (successMessage) showToast(successMessage, 'success');
+            if (errorMessage) showToast(errorMessage, 'error');
+        });
+
+        // ===== DARK MODE =====
+        function toggleDarkMode() {
+            const body  = document.body;
+            const icon  = document.getElementById('darkModeIcon');
+            const label = document.getElementById('darkModeLabel');
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            if (icon)  icon.className    = isDark ? 'fa-solid fa-sun'  : 'fa-solid fa-moon';
+            if (label) label.textContent = isDark ? 'Light' : 'Dark';
+            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+        }
+
+        (function() {
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                document.body.classList.add('dark-mode');
+                const icon  = document.getElementById('darkModeIcon');
+                const label = document.getElementById('darkModeLabel');
+                if (icon)  icon.className    = 'fa-solid fa-sun';
+                if (label) label.textContent = 'Light';
+            }
+        })();
+
+        // ===== SIDEBAR MOBILE TOGGLE =====
+        const hamburgerMenu = document.getElementById('hamburgerMenu');
+        const appSidebar = document.getElementById('appSidebar');
+        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+        if (hamburgerMenu && appSidebar && sidebarBackdrop) {
+            hamburgerMenu.addEventListener('click', function() {
+                appSidebar.classList.add('show');
+                sidebarBackdrop.classList.add('show');
+            });
+
+            sidebarBackdrop.addEventListener('click', function() {
+                appSidebar.classList.remove('show');
+                sidebarBackdrop.classList.remove('show');
+            });
+        }
+
+        // ===== SCROLL PROGRESS BAR =====
+        window.addEventListener('scroll', function() {
+            const scrollTop    = window.scrollY;
+            const docHeight    = document.body.scrollHeight - window.innerHeight;
+            const pct          = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            document.getElementById('scrollProgressBar').style.width = pct + '%';
+
+            // Back-to-top button visibility
+            const btn = document.getElementById('backToTop');
+            if (btn) btn.style.display = scrollTop > 300 ? 'flex' : 'none';
+        });
+
+        // ===== SESSION TIMEOUT (25 min inactivity warning, then 5 min countdown) =====
+        @if (Context.Session.GetString("Username") != null) {
+            <text>
+            var _sessionWarningMinutes = 25;  // show warning after 25 min inactivity
+            var _sessionCountdownSecs  = 300; // 5-minute countdown
+            var _inactivityTimer, _countdownTimer;
+            var _countdownRemaining = _sessionCountdownSecs;
+
+            function resetSessionTimer() {
+                document.getElementById('sessionModal').style.display = 'none';
+                _countdownRemaining = _sessionCountdownSecs;
+                clearTimeout(_inactivityTimer);
+                clearInterval(_countdownTimer);
+                fetch('/Account/KeepAlive', { method: 'GET', credentials: 'same-origin' }).catch(function() {});
+                startInactivityTimer();
+            }
+
+            function startInactivityTimer() {
+                _inactivityTimer = setTimeout(function() {
+                    showSessionWarning();
+                }, _sessionWarningMinutes * 60 * 1000);
+            }
+
+            function showSessionWarning() {
+                _countdownRemaining = _sessionCountdownSecs;
+                document.getElementById('sessionModal').style.display = 'flex';
+                updateCountdownDisplay();
+                _countdownTimer = setInterval(function() {
+                    _countdownRemaining--;
+                    updateCountdownDisplay();
+                    if (_countdownRemaining == 0) {
+                        clearInterval(_countdownTimer);
+                        window.location.href = '/Account/Logout';
+                    }
+                }, 1000);
+            }
+
+            function updateCountdownDisplay() {
+                var m = Math.floor(_countdownRemaining / 60);
+                var s = _countdownRemaining % 60;
+                document.getElementById('sessionCountdown').textContent =
+                    String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+            }
+
+            // Reset on any user activity
+            ['mousemove','keydown','click','scroll','touchstart'].forEach(function(e) {
+                document.addEventListener(e, function() {
+                    if (document.getElementById('sessionModal').style.display === 'none') {
+                        resetSessionTimer();
+                    }
+                }, { passive: true });
+            });
+
+            startInactivityTimer();
+            </text>
+        }
+
+    </script>
+
+    <!-- TOAST -->
+
+    <div class="position-fixed
+                top-0 end-0 p-3"
+         style="z-index:9999">
+
+        <div id="liveToast"
+             class="toast align-items-center border-0"
+             role="alert">
+
+            <div class="d-flex">
+
+                <div class="toast-body">
+
+                    <!-- Message will be injected by JS -->
+
+                </div>
+
+                <button type="button"
+                        class="btn-close btn-close-white
+                               me-2 m-auto"
+                        data-bs-dismiss="toast">
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Logout Confirm Modal -->
+    <div id="logoutModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:16px; overflow:hidden; width:100%; max-width:380px; box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+            <div style="background:linear-gradient(135deg,#183B56,#285072); color:white; padding:20px 24px;">
+                <h5 style="margin:0; font-weight:700;"><i class="fa-solid fa-right-from-bracket me-2"></i>Confirm Logout</h5>
+            </div>
+            <div style="padding:24px;">
+                <p style="margin:0; color:#333; font-size:15px;">Are you sure you want to logout?</p>
+            </div>
+            <div style="padding:0 24px 20px; display:flex; justify-content:flex-end; gap:10px;">
+                <button onclick="document.getElementById('logoutModal').style.display='none'" style="padding:8px 20px; border-radius:10px; border:1px solid #ccc; background:white; cursor:pointer; font-family:inherit;">Cancel</button>
+                <a href="/Account/Logout" style="padding:8px 20px; border-radius:10px; background:linear-gradient(135deg,#dc3545,#c82333); color:white; text-decoration:none; font-weight:600; font-family:inherit;"><i class="fa-solid fa-right-from-bracket me-1"></i>Yes, Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Timeout Warning Modal -->
+    <div id="sessionModal">
+        <div class="session-box">
+            <div class="session-header">
+                <h5><i class="fa-solid fa-clock me-2"></i>Session Expiring Soon</h5>
+            </div>
+            <div class="session-body">
+                <p style="color:#555; margin-bottom:4px; text-align:center;">Your session will expire in</p>
+                <div class="session-countdown" id="sessionCountdown">05:00</div>
+                <p style="color:#888; font-size:13px; text-align:center; margin-top:8px;">Click <strong>Stay Logged In</strong> to continue your session.</p>
+            </div>
+            <div class="session-footer">
+                <a href="/Account/Logout" style="padding:9px 20px; border-radius:10px; background:linear-gradient(135deg,#dc3545,#c82333); color:white; text-decoration:none; font-weight:600;">Logout Now</a>
+                <button onclick="resetSessionTimer()" style="padding:9px 20px; border-radius:10px; background:linear-gradient(135deg,#183B56,#285072); color:white; border:none; font-weight:600; cursor:pointer; font-family:inherit;"><i class="fa-solid fa-rotate-right me-1"></i>Stay Logged In</button>
+            </div>
+        </div>
+    </div>
+    <script>
+document.addEventListener('hidden.bs.modal', function () {
+
+    document.body.classList.remove('modal-open');
+
+    document.body.style.overflow = '';
+
+    document.body.style.paddingRight = '';
+
+    document.querySelectorAll('.modal-backdrop')
+        .forEach(x => x.remove());
+
+});
+</script>
+
+</body>
+
+</html>

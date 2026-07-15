@@ -1,0 +1,191 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Upload Document";
+}
+
+<style>
+    .page-card {
+        background: rgba(255,255,255,0.94);
+        backdrop-filter: blur(8px);
+        border: none;
+        border-radius: 25px;
+        box-shadow: 0px 20px 60px rgba(0,0,0,0.4);
+        padding: 40px;
+        margin-bottom: 24px;
+    }
+
+    .page-card h4, .page-card h5 {
+        color: #183B56;
+        font-weight: 700;
+    }
+
+    .form-label { font-weight: 600; color: #183B56; }
+
+    .form-control, .form-select {
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 11px 14px;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #285072;
+        box-shadow: 0 0 10px rgba(40,80,114,0.2);
+    }
+
+    .btn-upload {
+        background: linear-gradient(135deg, #183B56, #285072);
+        border: none;
+        border-radius: 12px;
+        padding: 12px 32px;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s;
+        box-shadow: 0 5px 20px rgba(24,59,86,0.35);
+        cursor: pointer;
+    }
+
+    .btn-upload:hover {
+        background: linear-gradient(135deg, #285072, #4C7190);
+        transform: translateY(-2px);
+    }
+
+    .btn-back {
+        border: 2px solid #285072;
+        border-radius: 12px;
+        padding: 12px 32px;
+        font-weight: 600;
+        color: #285072;
+        text-decoration: none;
+        transition: all 0.3s;
+        background: transparent;
+    }
+
+    .btn-back:hover { background: #285072; color: white; }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+</style>
+
+<div class="container mt-4">
+
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Upload Form -->
+    <div class="page-card">
+        <h4 style="margin-bottom:20px;">📄 Upload Document</h4>
+        <hr />
+
+        <form method="post" asp-controller="Document" asp-action="Upload" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Document Type *</label>
+                    <select name="documentType" class="form-select" required>
+                        <option value="">-- Select Type --</option>
+                        <option value="Aadhar">Aadhar Card</option>
+                        <option value="PAN">PAN Card</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Choose File *</label>
+                    <input type="file" name="file" class="form-control" accept=".pdf" required />
+                    <small class="text-muted">PDF files only — max 5MB</small>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn-upload w-100">Upload</button>
+                </div>
+            </div>
+            <div class="mt-3">
+            <a asp-controller="Account" asp-action="Dashboard" class="btn-back d-inline-block">
+                <i class="fa-solid fa-arrow-left me-1"></i>Back to Dashboard
+            </a>
+        </div>
+        </form>
+    </div>
+
+    <!-- My Documents -->
+    <div class="page-card">
+        <h5 style="margin-bottom:20px;">📂 My Documents</h5>
+
+        @if (ViewBag.Documents != null && ((List<SecureAuthPortal.Models.DocumentMaster>)ViewBag.Documents).Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead style="background: linear-gradient(135deg, #183B56, #285072); color:white;">
+                        <tr>
+                            <th>Type</th>
+                            <th>File Name</th>
+                            <th>Upload Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var doc in (List<SecureAuthPortal.Models.DocumentMaster>)ViewBag.Documents)
+                        {
+                            <tr>
+                                <td><strong>@doc.DocumentType</strong></td>
+                                <td>
+                                    <a href="/Document/Download/@doc.DocumentId" style="color:#285072;">@doc.FileName</a>
+                                </td>
+                                <td>@doc.UploadDate.ToString("dd-MMM-yyyy hh:mm tt")</td>
+                                <td>
+                                    @if (doc.Status == "Approved")
+                                    {
+                                        <span class="status-badge" style="background:#d4edda; color:#155724;">✔ Approved</span>
+                                    }
+                                    else if (doc.Status == "Rejected")
+                                    {
+                                        <span class="status-badge" style="background:#f8d7da; color:#721c24;">✘ Rejected</span>
+                                        @if (!string.IsNullOrEmpty(doc.VerificationNotes))
+                                        {
+                                            <br /><small class="text-danger" style="font-size:11px;" title="@doc.VerificationNotes">📝 @doc.VerificationNotes</small>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge" style="background:#fff3cd; color:#856404;">⏳ Pending Review</span>
+                                    }
+                                </td>
+                                 <td>
+                                     @if (doc.Status != "Approved")
+                                     {
+                                         <form method="post" asp-controller="Document" asp-action="Delete" asp-route-id="@doc.DocumentId" style="display:inline;">
+                                             @Html.AntiForgeryToken()
+                                             <button type="submit" class="btn btn-sm btn-danger" style="border-radius:8px;"
+                                                     onclick="return confirm('Are you sure you want to delete @doc.FileName?')">Delete</button>
+                                         </form>
+                                     }
+                                     else
+                                     {
+                                         <span class="text-muted" style="font-size:12px;">Locked</span>
+                                     }
+                                 </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted mb-0">No documents uploaded yet.</p>
+        }
+    </div>
+
+</div>
+
+

@@ -1,0 +1,188 @@
+@model SecureAuthPortal.Models.DocumentMaster
+
+@{
+    ViewData["Title"] = "Review Document";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .review-card {
+        background: rgba(255,255,255,0.94);
+        backdrop-filter: blur(8px);
+        border: none;
+        border-radius: 25px;
+        box-shadow: 0px 20px 60px rgba(0,0,0,0.4);
+        padding: 40px;
+        margin-bottom: 24px;
+    }
+
+    .review-card h1, .review-card h4, .review-card h5 {
+        color: #183B56;
+        font-weight: 700;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="review-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0">Document Viewer</h1>
+            <a href="@Url.Action("Download", new { id = Model.DocumentId })" class="btn btn-outline-primary" style="font-weight:600; border-radius:10px;">
+                <i class="fa-solid fa-download me-2"></i>Download Original
+            </a>
+        </div>
+
+        <div class="row">
+            <div class="col-md-5">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted">User:</dt>
+                    <dd class="col-sm-8" style="font-weight:600; color:#183B56;">@Model.User.FullName (@Model.User.Username)</dd>
+
+                    <dt class="col-sm-4 text-muted">Type:</dt>
+                    <dd class="col-sm-8">@Model.DocumentType</dd>
+
+                    <dt class="col-sm-4 text-muted">File Name:</dt>
+                    <dd class="col-sm-8">@Model.FileName</dd>
+
+                    <dt class="col-sm-4 text-muted">Uploaded:</dt>
+                    <dd class="col-sm-8">@Model.UploadDate.ToString("dd MMM yyyy, hh:mm tt")</dd>
+
+                    <dt class="col-sm-4 text-muted">Status:</dt>
+                    <dd class="col-sm-8">
+                        @if(Model.Status == "Pending")
+                        {
+                            <span class="badge" style="background:#fff3cd; color:#856404;">⏳ Pending</span>
+                        }
+                        else if(Model.Status == "Approved")
+                        {
+                            <span class="badge" style="background:#d4edda; color:#155724;">✅ Approved</span>
+                        }
+                        else
+                        {
+                            <span class="badge" style="background:#f8d7da; color:#721c24;">❌ Rejected</span>
+                        }
+                    </dd>
+                </dl>
+
+                @if(Model.Status == "Pending")
+                {
+                    <div class="mt-4 p-3" style="background:#f8f9ff; border-radius:12px; border:1px solid #e0e6ed;">
+                        <label for="verificationNotes" class="form-label fw-bold text-dark">Verification Notes (Optional):</label>
+                        <textarea id="verificationNotes" class="form-control mb-3" rows="3" style="resize:none; border-radius:8px;" placeholder="Add comments here..."></textarea>
+                        
+                        <div class="d-flex gap-2">
+                            <button id="approveBtn" class="btn btn-success flex-grow-1" style="font-weight:600; border-radius:8px;">
+                                <i class="fa-solid fa-check me-1"></i>Approve
+                            </button>
+                            <button id="rejectBtn" class="btn btn-danger flex-grow-1" style="font-weight:600; border-radius:8px;">
+                                <i class="fa-solid fa-xmark me-1"></i>Reject
+                            </button>
+                        </div>
+                    </div>
+                }
+                else if(!string.IsNullOrEmpty(Model.VerificationNotes))
+                {
+                    <div class="mt-4 p-3" style="background:#f9f9f9; border-radius:12px; border:1px solid #e0e0e0;">
+                        <h6 class="text-muted fw-bold">Verification Notes</h6>
+                        <p class="mb-0" style="color:#333;">@Model.VerificationNotes</p>
+                    </div>
+                }
+
+                <div class="mt-4">
+                    <button type="button" onclick="history.back()" class="btn btn-secondary" style="border-radius:10px;">
+                        <i class="fa-solid fa-arrow-left me-1"></i>Back
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div style="background:#f1f3f5; border-radius:16px; padding:2px; height:600px; display:flex; align-items:center; justify-content:center; overflow:hidden; box-shadow:inset 0 0 10px rgba(0,0,0,0.05);">
+                    @if (Model.FileData != null)
+                    {
+                        var contentType = Model.ContentType?.ToLower() ?? "";
+                        if (contentType == "application/pdf")
+                        {
+                            <iframe src="data:application/pdf;base64,@Convert.ToBase64String(Model.FileData)" width="100%" height="100%" style="border:none; border-radius:14px;"></iframe>
+                        }
+                        else if (contentType.StartsWith("image/"))
+                        {
+                            <img src="data:@contentType;base64,@Convert.ToBase64String(Model.FileData)" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:14px;" />
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted">
+                                <i class="fa-solid fa-file-circle-question" style="font-size:64px; color:#adb5bd; margin-bottom:16px;"></i>
+                                <h5>Preview Not Supported</h5>
+                                <p>This file type (@contentType) cannot be previewed in the browser.</p>
+                                <a href="@Url.Action("Download", new { id = Model.DocumentId })" class="btn btn-primary mt-2">
+                                    <i class="fa-solid fa-download me-1"></i>Download File
+                                </a>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">No file data found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+    $(document).ready(function () {
+        $('#approveBtn').on('click', function () {
+            if (confirm("Are you sure you want to approve this document?")) {
+                submitAction('approve', $(this));
+            }
+        });
+
+        $('#rejectBtn').on('click', function () {
+            if (confirm("Are you sure you want to reject this document?")) {
+                submitAction('reject', $(this));
+            }
+        });
+
+        function submitAction(actionType, confirmBtn) {
+            const notes = $('#verificationNotes').val();
+            const documentId = @Model.DocumentId;
+            let url = '';
+
+            if (actionType === 'approve') {
+                url = '@Url.Action("Approve")';
+            } else if (actionType === 'reject') {
+                url = '@Url.Action("Reject")';
+            } else {
+                return;
+            }
+
+            confirmBtn.prop('disabled', true).text('Processing...');
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: {
+                    id: documentId,
+                    notes: notes
+                },
+                success: function (response) {
+                    if (response.success) {
+                        showToast(response.message, 'success');
+                        setTimeout(() => {
+                            window.location.href = '@Url.Action("PendingApprovals")';
+                        }, 1000);
+                    } else {
+                        showToast('An error occurred: ' + response.message, 'error');
+                        confirmBtn.prop('disabled', false).text(actionType === 'approve' ? 'Approve' : 'Reject');
+                    }
+                },
+                error: function () {
+                    showToast('A server error occurred. Please try again.', 'error');
+                    confirmBtn.prop('disabled', false).text(actionType === 'approve' ? 'Approve' : 'Reject');
+                }
+            });
+        }
+    });
+    </script>
+}

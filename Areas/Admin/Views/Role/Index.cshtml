@@ -1,0 +1,202 @@
+@model List<SecureAuthPortal.Models.RoleMaster>
+
+@{
+    ViewData["Title"] = "Role Management";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .page-title {
+        font-size: 42px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #ffffff, #8ec5ff, #d7e9ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 4px 20px rgba(0,0,0,0.35);
+        letter-spacing: 1px;
+    }
+
+    .table-card {
+        background: rgba(255,255,255,0.94);
+        backdrop-filter: blur(8px);
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0px 10px 30px rgba(0,0,0,0.2);
+        overflow: hidden;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #183B56, #285072);
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s;
+        box-shadow: 0 5px 15px rgba(24,59,86,0.3);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #285072, #4C7190);
+        transform: translateY(-2px);
+        box-shadow: 0px 8px 20px rgba(24,59,86,0.35);
+    }
+</style>
+
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="page-title">Role Management</h2>
+        </div>
+        <div class="col text-end">
+            <button type="button" class="btn btn-primary" style="padding:10px 22px;" data-bs-toggle="modal" data-bs-target="#addRoleModal">
+                + Add New Role
+            </button>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="table-card">
+        <div class="card-body">
+            @if (Model.Count == 0)
+            {
+                <div class="alert alert-info mb-0">
+                    No roles created yet.
+                    <button type="button" class="btn btn-sm btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#addRoleModal">
+                        Create your first role
+                    </button>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead style="background: linear-gradient(135deg, #183B56, #285072); color:white;">
+                            <tr>
+                                <th>Role ID</th>
+                                <th>Role Name</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>Created Date</th>
+                                <th>Users</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var role in Model)
+                            {
+                                int userCount = ViewBag.UserCountPerRole != null &&
+                                    ((System.Collections.Generic.Dictionary<long, int>)ViewBag.UserCountPerRole).ContainsKey(role.RoleId)
+                                    ? ((System.Collections.Generic.Dictionary<long, int>)ViewBag.UserCountPerRole)[role.RoleId]
+                                    : 0;
+
+                                <tr>
+                                    <td>@role.RoleId</td>
+                                    <td><strong>@role.RoleName</strong></td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(role.Description))
+                                        {
+                                            @(role.Description.Length > 50 ? role.Description.Substring(0, 50) + "..." : role.Description)
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (role.IsActive)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        }
+                                    </td>
+                                    <td>@role.CreatedDate.ToString("dd-MMM-yyyy")</td>
+                                    <td><span class="badge bg-info text-dark">@userCount user(s)</span></td>
+                                     <td>
+                                         <button type="button" class="btn btn-sm btn-outline-danger"
+                                                 onclick="showDeleteRoleModal(@role.RoleId, '@role.RoleName')">
+                                             <i class="fa-solid fa-trash-can"></i> Delete
+                                         </button>
+                                     </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Add Role Modal -->
+<div class="modal fade" id="addRoleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #183B56, #285072); color:white;">
+                <h5 class="modal-title">Add New Role</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="@Url.Action("Add", "Role", new { area = "Admin" })">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="roleName" class="form-label"><strong>Role Name *</strong></label>
+                        <input type="text" id="roleName" name="roleName" class="form-control"
+                               placeholder="e.g., Manager, Supervisor" required />
+                        <small class="form-text text-muted">Must be unique</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Role</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Delete Role Modal -->
+<div id="customDeleteRoleModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div style="background:white; border-radius:16px; overflow:hidden; width:100%; max-width:400px; box-shadow:0 20px 60px rgba(0,0,0,0.4); animation: fadeSlideUp 0.3s ease;">
+        <div style="background:linear-gradient(135deg,#dc3545,#c82333); padding:20px 24px; color:white;">
+            <h5 style="margin:0; font-weight:700;"><i class="fa-solid fa-triangle-exclamation me-2"></i>Confirm Delete</h5>
+        </div>
+        <div style="padding:24px;">
+            <p id="customDeleteRoleBody" style="margin:0; color:#333; font-size:15px;"></p>
+        </div>
+        <div style="padding:0 24px 20px; display:flex; justify-content:flex-end; gap:10px;">
+            <button onclick="document.getElementById('customDeleteRoleModal').style.display='none'" style="padding:8px 20px; border-radius:10px; border:1px solid #ccc; background:white; cursor:pointer; font-weight:500;">Cancel</button>
+            <button onclick="document.getElementById('deleteRoleForm').submit()" style="padding:8px 20px; border-radius:10px; border:none; background:linear-gradient(135deg,#dc3545,#c82333); color:white; font-weight:600; cursor:pointer;">
+                Yes, Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<form id="deleteRoleForm" method="post" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+<script>
+    function showDeleteRoleModal(roleId, roleName) {
+        document.getElementById('customDeleteRoleBody').innerHTML = `Are you sure you want to delete the role <strong>${roleName}</strong>?<br><small class="text-danger">This action cannot be undone.</small>`;
+        document.getElementById('deleteRoleForm').action = '/Admin/Role/Delete/' + roleId;
+        document.getElementById('customDeleteRoleModal').style.display = 'flex';
+    }
+</script>

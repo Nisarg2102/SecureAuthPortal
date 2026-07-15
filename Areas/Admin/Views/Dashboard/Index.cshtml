@@ -1,0 +1,120 @@
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <h2 class="page-title">Admin Dashboard</h2>
+
+    <div class="row">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stat-card p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">Total Users</h6>
+                        <h2 class="stat-number">@ViewBag.TotalUsers</h2>
+                    </div>
+                    <div class="fs-1">👥</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stat-card p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">Total Admins</h6>
+                        <h2 class="stat-number">@ViewBag.TotalAdmins</h2>
+                    </div>
+                    <div class="fs-1">🛡️</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stat-card p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">Total Documents</h6>
+                        <h2 class="stat-number">@ViewBag.TotalDocuments</h2>
+                    </div>
+                    <div class="fs-1">📄</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="stat-card p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">Pending Documents</h6>
+                        <h2 class="stat-number">@ViewBag.PendingDocuments</h2>
+                    </div>
+                    <div class="fs-1">⏳</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="table-card">
+                <div class="card-body">
+                    <h5 class="card-title">Recent Users</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Registered On</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in ViewBag.RecentUsers)
+                                {
+                                    <tr>
+                                        <td>@user.FullName</td>
+                                        <td>@user.EmailId</td>
+                                        <td>@user.CreatedDate.ToString("g")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="table-card">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Documents</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Document Type</th>
+                                    <th>Uploaded On</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var doc in ViewBag.PendingDocumentsList)
+                                {
+                                    <tr>
+                                        <td>@doc.User.FullName</td>
+                                        <td>@doc.DocumentType</td>
+                                        <td>@doc.UploadDate.ToString("g")</td>
+                                        <td>
+                                            <a href="@Url.Action("Download", "Document", new { id = doc.DocumentId })" class="btn btn-primary btn-sm">Download</a>
+                                            <a href="@Url.Action("UpdateStatus", "Document", new { id = doc.DocumentId, status = "Approved" })" class="btn btn-success btn-sm">Approve</a>
+                                            <a href="@Url.Action("UpdateStatus", "Document", new { id = doc.DocumentId, status = "Rejected" })" class="btn btn-danger btn-sm">Reject</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

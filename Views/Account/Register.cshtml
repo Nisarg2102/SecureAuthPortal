@@ -1,0 +1,909 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@model SecureAuthPortal.ViewModels.RegisterViewModel
+
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<style>
+
+    .register-wrapper
+    {
+        min-height: 88vh;
+
+        display: flex;
+
+        justify-content: center;
+
+        align-items: center;
+    }
+
+    .register-card
+    {
+        width: 100%;
+
+        max-width: 980px;
+
+        border-radius: 28px;
+
+        overflow: hidden;
+
+        background: rgba(255,255,255,0.96);
+
+        backdrop-filter: blur(10px);
+
+        box-shadow:
+            0px 20px 60px rgba(0,0,0,0.35);
+
+        animation: fadeIn 0.8s ease;
+    }
+
+    @@keyframes fadeIn
+    {
+        from
+        {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to
+        {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .left-side
+    {
+        background:
+            linear-gradient(
+                135deg,
+                rgba(24,59,86,0.96),
+                rgba(56,92,128,0.92)
+            );
+
+        color: white;
+
+        padding: 45px 35px;
+
+        display: flex;
+
+        flex-direction: column;
+
+        justify-content: center;
+
+        align-items: center;
+
+        text-align: center;
+
+        position: relative;
+    }
+
+    .left-side::before
+    {
+        content: '';
+
+        position: absolute;
+
+        width: 220px;
+
+        height: 220px;
+
+        background: rgba(255,255,255,0.08);
+
+        border-radius: 50%;
+
+        top: -40px;
+
+        right: -40px;
+    }
+
+    .left-side h1
+    {
+        font-size: 46px;
+
+        font-weight: 700;
+
+        margin-bottom: 10px;
+
+        z-index: 2;
+    }
+
+    .left-side p
+    {
+        font-size: 17px;
+
+        opacity: 0.9;
+
+        line-height: 1.7;
+
+        z-index: 2;
+    }
+
+    .left-side img
+    {
+        width: 220px;
+
+        margin-top: 25px;
+
+        z-index: 2;
+    }
+
+    .right-side
+    {
+        padding: 35px 40px;
+    }
+
+    .right-side h2
+    {
+        color: #183B56;
+
+        font-weight: 700;
+    }
+
+    .form-label
+    {
+        font-weight: 600;
+
+        color: #183B56;
+
+        margin-bottom: 6px;
+    }
+
+    .form-control,
+    .form-select
+    {
+        border-radius: 12px;
+
+        padding: 11px 14px;
+
+        border: 1px solid #d5dde6;
+    }
+
+    .form-control:focus,
+    .form-select:focus
+    {
+        border-color: #2D5B84;
+
+        box-shadow:
+            0 0 10px rgba(45,91,132,0.18);
+    }
+
+    .input-group-text
+    {
+        border-radius: 12px 0 0 12px;
+
+        background: #f5f7fa;
+
+        color: #183B56;
+    }
+
+    .btn-register
+    {
+        width: 100%;
+
+        border: none;
+
+        border-radius: 14px;
+
+        padding: 12px;
+
+        font-size: 17px;
+
+        font-weight: 600;
+
+        color: white;
+
+        background:
+            linear-gradient(
+                135deg,
+                #183B56,
+                #2D5B84
+            );
+
+        box-shadow:
+            0 10px 25px rgba(24,59,86,0.25);
+
+        transition: 0.3s;
+    }
+
+    .btn-register:hover
+    {
+        transform: translateY(-2px);
+    }
+
+    .login-link
+    {
+        text-decoration: none;
+
+        font-weight: 600;
+
+        color: #183B56;
+    }
+
+    .login-link:hover
+    {
+        color: #2D5B84;
+    }
+
+    /* Password toggle */
+    .password-wrapper {
+        position: relative;
+    }
+
+    .password-wrapper .form-control {
+        padding-right: 46px;
+    }
+
+    .toggle-eye {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #4C7190;
+        font-size: 17px;
+        background: none;
+        border: none;
+        padding: 0;
+        line-height: 1;
+        z-index: 5;
+        transition: color 0.2s;
+    }
+
+    .toggle-eye:hover { color: #183B56; }
+
+    /* Password strength meter */
+    .strength-bar-wrap {
+        height: 5px;
+        background: #e9ecef;
+        border-radius: 99px;
+        margin-top: 8px;
+        overflow: hidden;
+    }
+
+    .strength-bar {
+        height: 100%;
+        width: 0%;
+        border-radius: 99px;
+        transition: width 0.4s ease, background 0.4s ease;
+    }
+
+    .strength-label {
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 4px;
+        transition: color 0.3s;
+    }
+
+    @@media(max-width:768px) {
+        .left-side { display: none; }
+        .right-side { padding: 28px; }
+    }
+
+    /* AJAX Validation Feedback Styles */
+    .ajax-feedback
+    {
+        font-size: 13px;
+        font-weight: 500;
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s ease;
+        opacity: 0;
+        height: 0;
+        overflow: hidden;
+    }
+
+    .ajax-feedback.show
+    {
+        opacity: 1;
+        height: auto;
+        margin-bottom: 5px;
+    }
+
+    .ajax-feedback.success
+    {
+        color: #198754;
+    }
+
+    .ajax-feedback.error
+    {
+        color: #dc3545;
+    }
+
+    .ajax-feedback.loading
+    {
+        color: #6c757d;
+    }
+
+</style>
+
+<div class="register-wrapper">
+
+    <div class="register-card">
+
+        <div class="row g-0">
+
+            <!-- LEFT -->
+
+            <div class="col-md-5 left-side">
+
+                <h1><span id="regTypewriter"></span></h1>
+
+                <p>
+                    Create your account and access
+                    the secure User Management System.
+                </p>
+
+                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+
+            </div>
+
+            <!-- RIGHT -->
+
+            <div class="col-md-7 right-side">
+
+                <h2 class="text-center mb-4">Create Account</h2>
+
+
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>✘ Error!</strong> @TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                <form asp-action="Register">
+
+                    <div class="row">
+
+                        <!-- FULL NAME -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label asp-for="FullName"
+                                   class="form-label">
+
+                                Full Name
+
+                            </label>
+
+                            <div class="input-group">
+
+                                <span class="input-group-text">
+
+                                    <i class="bi bi-person-fill"></i>
+
+                                </span>
+
+                                <input asp-for="FullName"
+                                       class="form-control"
+                                       placeholder="Enter Full Name" />
+
+                            </div>
+
+                        </div>
+
+                        <!-- USERNAME -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label asp-for="Username"
+                                   class="form-label">
+
+                                Username
+
+                            </label>
+
+                            <div class="input-group">
+
+                                <span class="input-group-text">
+
+                                    <i class="bi bi-person-badge-fill"></i>
+
+                                </span>
+
+                                <input asp-for="Username"
+                                       class="form-control"
+                                       placeholder="Enter Username" />
+
+                            </div>
+
+                            <div id="Username-ajax-feedback" class="ajax-feedback"></div>
+
+                        </div>
+
+                        <!-- EMAIL -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label asp-for="EmailId"
+                                   class="form-label">
+
+                                Email Address
+
+                            </label>
+
+                            <div class="input-group">
+
+                                <span class="input-group-text">
+
+                                    <i class="bi bi-envelope-fill"></i>
+
+                                </span>
+
+                                <input asp-for="EmailId"
+                                       class="form-control"
+                                       placeholder="Enter Email" />
+
+                            </div>
+
+                            <div id="EmailId-ajax-feedback" class="ajax-feedback"></div>
+
+                        </div>
+
+                        <!-- MOBILE -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label asp-for="MobileNo"
+                                   class="form-label">
+
+                                Mobile Number
+
+                            </label>
+
+                            <div class="input-group">
+
+                                <span class="input-group-text">
+
+                                    <i class="bi bi-telephone-fill"></i>
+
+                                </span>
+
+                                <input asp-for="MobileNo"
+                                       class="form-control"
+                                       placeholder="Enter Mobile Number" />
+
+                            </div>
+
+                            <div id="MobileNo-ajax-feedback" class="ajax-feedback"></div>
+
+                        </div>
+
+                        <!-- PASSWORD -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label asp-for="Password"
+                                   class="form-label">
+
+                                Password
+
+                            </label>
+
+                            <div class="input-group">
+
+                                <span class="input-group-text">
+
+                                    <i class="bi bi-lock-fill"></i>
+
+                                </span>
+
+                                <div class="password-wrapper flex-grow-1" style="position:relative;">
+                                    <input asp-for="Password"
+                                           id="RegPassword"
+                                           type="password"
+                                           class="form-control"
+                                           style="border-radius:0 12px 12px 0;"
+                                           placeholder="Enter Password" />
+                                    <button type="button" class="toggle-eye" onclick="toggleRegPassword('RegPassword','regEye1')" tabindex="-1">
+                                        <i class="fa-regular fa-eye" id="regEye1"></i>
+                                    </button>
+                                </div>
+
+                            </div>
+
+                            <!-- Strength meter -->
+                            <div class="strength-bar-wrap mt-2">
+                                <div class="strength-bar" id="strengthBar"></div>
+                            </div>
+                            <div class="strength-label" id="strengthLabel" style="color:#999;">Enter a password</div>
+
+                        </div>
+
+                        <!-- CONFIRM PASSWORD -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label asp-for="ConfirmPassword"
+                                   class="form-label">
+
+                                Confirm Password
+
+                            </label>
+
+                            <div class="password-wrapper">
+                                <input asp-for="ConfirmPassword"
+                                       id="RegConfirmPassword"
+                                       type="password"
+                                       class="form-control"
+                                       placeholder="Confirm Password" />
+                                <button type="button" class="toggle-eye" onclick="toggleRegPassword('RegConfirmPassword','regEye2')" tabindex="-1">
+                                    <i class="fa-regular fa-eye" id="regEye2"></i>
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <!-- DOB -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label asp-for="DOB"
+                                   class="form-label">
+
+                                Date of Birth
+
+                            </label>
+
+                            <input asp-for="DOB"
+                                   type="date"
+                                   class="form-control" />
+
+                        </div>
+
+                        <!-- ROLE -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+
+                                Role
+
+                            </label>
+
+                            <select asp-for="RoleId"
+                                    asp-items="ViewBag.Roles"
+                                    class="form-select">
+
+                                <option value="">
+                                    Select Role
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                    <!-- GENDER -->
+
+                    <div class="mb-4">
+
+                        <label class="form-label">
+
+                            Gender
+
+                        </label>
+
+                        <div class="d-flex gap-4">
+
+                            <div class="form-check">
+
+                                <input class="form-check-input"
+                                       type="radio"
+                                       asp-for="Gender"
+                                       value="Male">
+
+                                <label class="form-check-label">
+
+                                    Male
+
+                                </label>
+
+                            </div>
+
+                            <div class="form-check">
+
+                                <input class="form-check-input"
+                                       type="radio"
+                                       asp-for="Gender"
+                                       value="Female">
+
+                                <label class="form-check-label">
+
+                                    Female
+
+                                </label>
+
+                            </div>
+
+                            <div class="form-check">
+
+                                <input class="form-check-input"
+                                       type="radio"
+                                       asp-for="Gender"
+                                       value="Other">
+
+                                <label class="form-check-label">
+
+                                    Other
+
+                                </label>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- CAPTCHA v3 -->
+                    @{ ViewBag.RecaptchaFieldId = "recaptchaToken"; }
+                    <partial name="_RecaptchaV3Partial" />
+
+                    <!-- BUTTON -->
+
+                    <button type="submit"
+                            id="registerBtn"
+                            class="btn-register">
+
+                        <i class="fa-solid fa-user-plus me-2"></i>Register
+
+                    </button>
+
+                    <div class="text-center mt-4">
+
+                        Already have an account?
+
+                        <a asp-action="Login"
+                           class="login-link">
+
+                            Login
+
+                        </a>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        // ===== TYPEWRITER EFFECT =====
+        (function() {
+            var text = 'Welcome! 🚀';
+            var el   = document.getElementById('regTypewriter');
+            var i    = 0;
+            function type() {
+                if (i < text.length) {
+                    el.textContent += text.charAt(i++);
+                    setTimeout(type, 65);
+                }
+            }
+            setTimeout(type, 400);
+        })();
+
+        // ===== PASSWORD TOGGLE =====
+        function toggleRegPassword(fieldId, iconId) {
+            var field = document.getElementById(fieldId);
+            var icon  = document.getElementById(iconId);
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.className = 'fa-regular fa-eye-slash';
+            } else {
+                field.type = 'password';
+                icon.className = 'fa-regular fa-eye';
+            }
+        }
+
+        // ===== PASSWORD STRENGTH METER =====
+        document.getElementById('RegPassword').addEventListener('input', function() {
+            var val = this.value;
+            var strength = 0;
+            if (val.length >= 8) strength++;
+            if (/[A-Z]/.test(val)) strength++;
+            if (/[0-9]/.test(val)) strength++;
+            if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+            var bar   = document.getElementById('strengthBar');
+            var label = document.getElementById('strengthLabel');
+            var widths = ['0%', '25%', '50%', '75%', '100%'];
+            var colors = ['#e9ecef', '#dc3545', '#fd7e14', '#ffc107', '#28a745'];
+            var labels = ['Enter a password', 'Weak', 'Fair', 'Good', 'Strong 💪'];
+            var lcolors = ['#999', '#dc3545', '#fd7e14', '#e0a800', '#28a745'];
+
+            bar.style.width      = widths[strength];
+            bar.style.background = colors[strength];
+            label.textContent    = labels[strength];
+            label.style.color    = lcolors[strength];
+        });
+
+        $(document).ready(function () {
+            // Validation states
+            var ajaxStates = {
+                Username: { loading: false, valid: false },
+                EmailId: { loading: false, valid: false },
+                MobileNo: { loading: false, valid: false }
+            };
+
+            // Debounce helper to prevent spamming server on typing
+            function debounce(func, delay) {
+                let timeout;
+                return function (...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), delay);
+                };
+            }
+
+            // Show visual feedback state below input
+            function showFeedback(fieldId, status, message) {
+                var $input = $("#" + fieldId);
+                var $feedback = $("#" + fieldId + "-ajax-feedback");
+                
+                // Clear existing states
+                $input.removeClass("is-valid is-invalid");
+                $feedback.removeClass("success error loading show").addClass("show");
+
+                if (status === "loading") {
+                    $feedback.addClass("loading").html(
+                        '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' +
+                        'Checking availability...'
+                    );
+                    ajaxStates[fieldId].loading = true;
+                    ajaxStates[fieldId].valid = false;
+                } else if (status === "success") {
+                    $input.addClass("is-valid");
+                    $feedback.addClass("success").html(
+                        '<i class="bi bi-check-circle-fill"></i> ' + message
+                    );
+                    ajaxStates[fieldId].loading = false;
+                    ajaxStates[fieldId].valid = true;
+                } else if (status === "error") {
+                    $input.addClass("is-invalid");
+                    $feedback.addClass("error").html(
+                        '<i class="bi bi-exclamation-triangle-fill"></i> ' + message
+                    );
+                    ajaxStates[fieldId].loading = false;
+                    ajaxStates[fieldId].valid = false;
+                } else {
+                    // Reset / Clear
+                    $feedback.removeClass("show").html("");
+                    ajaxStates[fieldId].loading = false;
+                    ajaxStates[fieldId].valid = false;
+                }
+            }
+
+            // Run API availability validation checks
+            function runAjaxCheck(fieldId, type, val) {
+                if (!val || val.trim() === "") {
+                    showFeedback(fieldId, "clear");
+                    return;
+                }
+
+                var $input = $("#" + fieldId);
+                
+                // First check if jquery validation thinks this field is valid client-side
+                if (!$input.valid()) {
+                    showFeedback(fieldId, "clear");
+                    return;
+                }
+
+                showFeedback(fieldId, "loading");
+
+                $.ajax({
+                    url: '@Url.Action("CheckAvailability", "Account")',
+                    type: 'GET',
+                    data: { type: type, value: val },
+                    success: function (response) {
+                        if (response.available) {
+                            var displayType = type === "email" ? "Email" : (type === "mobile" ? "Mobile number" : "Username");
+                            showFeedback(fieldId, "success", displayType + " is available!");
+                        } else {
+                            var displayType = type === "email" ? "Email" : (type === "mobile" ? "Mobile number" : "Username");
+                            showFeedback(fieldId, "error", displayType + " is already registered.");
+                        }
+                    },
+                    error: function () {
+                        showFeedback(fieldId, "error", "Error checking availability.");
+                    }
+                });
+            }
+
+            // Define debounced event handlers
+            const checkUsername = debounce(function() {
+                runAjaxCheck("Username", "username", $(this).val());
+            }, 450);
+
+            const checkEmail = debounce(function() {
+                runAjaxCheck("EmailId", "email", $(this).val());
+            }, 450);
+
+            const checkMobile = debounce(function() {
+                runAjaxCheck("MobileNo", "mobile", $(this).val());
+            }, 450);
+
+            // Bind change / input triggers
+            $("#Username").on("input", checkUsername);
+            $("#EmailId").on("input", checkEmail);
+            $("#MobileNo").on("input", checkMobile);
+
+            // Also check on blur event (immediate)
+            $("#Username").on("blur", function() {
+                runAjaxCheck("Username", "username", $(this).val());
+            });
+            $("#EmailId").on("blur", function() {
+                runAjaxCheck("EmailId", "email", $(this).val());
+            });
+            $("#MobileNo").on("blur", function() {
+                runAjaxCheck("MobileNo", "mobile", $(this).val());
+            });
+
+            // Prevent form submit if validation is currently processing or has failed
+            $("form").on("submit", function (e) {
+                e.preventDefault();
+                var form = this;
+                var isFormValid = true;
+
+                if (!$(this).valid()) isFormValid = false;
+
+                for (var key in ajaxStates) {
+                    var inputVal = $("#" + key).val();
+                    if (inputVal && inputVal.trim() !== "") {
+                        if (ajaxStates[key].loading) {
+                            alert("Please wait. Checking field availability...");
+                            return false;
+                        }
+                        if (!ajaxStates[key].valid && $("#" + key).hasClass("is-invalid")) {
+                            isFormValid = false;
+                            $("#" + key).focus();
+                            var label = key === "EmailId" ? "Email" : (key === "MobileNo" ? "Mobile number" : "Username");
+                            showFeedback(key, "error", label + " is already taken.");
+                        }
+                    }
+                }
+
+                if (!isFormValid) return false;
+
+                // Show spinner on button
+                var btn = document.getElementById('registerBtn');
+                var originalBtnHtml = btn.innerHTML;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Creating Account...';
+                btn.disabled = true;
+
+                function resetRegisterBtn() {
+                    btn.innerHTML = originalBtnHtml;
+                    btn.disabled = false;
+                }
+
+                executeRecaptchaV3('register', function (token) {
+                    document.getElementById('recaptchaToken').value = token;
+                    form.submit();
+                }, function (message) {
+                    resetRegisterBtn();
+                    alert(message);
+                });
+            });
+        });
+    </script>
+}
+

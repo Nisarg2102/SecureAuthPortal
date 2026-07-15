@@ -1,0 +1,181 @@
+@model List<SecureAuthPortal.Models.ActivityLog>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    int curPage = ViewBag.Page;
+    int totalPages = ViewBag.TotalPages;
+    int totalCount = ViewBag.TotalCount;
+}
+
+<style>
+    .log-header { background: linear-gradient(135deg, #183B56, #285072); color: white; border-radius: 18px; padding: 28px 32px; margin-bottom: 28px; }
+    .log-header h2 { font-size: 26px; font-weight: 700; margin: 0; }
+    .log-header p { margin: 4px 0 0; opacity: 0.85; font-size: 14px; }
+    .filter-card { background: white; border-radius: 16px; padding: 20px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .log-table { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+    .log-table thead th { background: linear-gradient(135deg, #183B56, #285072); color: white; border: none; font-weight: 600; padding: 14px 12px; font-size: 13px; }
+    .log-table tbody tr:hover { background: rgba(24,59,86,0.04); }
+    .log-table tbody td { border-color: #f1f3f5; padding: 11px 12px; font-size: 13px; vertical-align: middle; }
+    .badge-success { background: linear-gradient(135deg,#28a745,#20923c); color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-failed { background: linear-gradient(135deg,#dc3545,#c82333); color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .pagination-btn { padding: 7px 14px; border-radius: 8px; border: 1px solid #dee2e6; background: white; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+    .pagination-btn:hover, .pagination-btn.active { background: linear-gradient(135deg, #183B56, #285072); color: white; border-color: transparent; }
+    .stat-card { border-radius: 14px; padding: 16px 20px; color: white; flex: 1; min-width: 130px; }
+</style>
+
+<div style="padding: 10px 0;">
+    <!-- Header -->
+    <div class="log-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h2><i class="fa-solid fa-list-check me-2"></i>Activity Log</h2>
+                <p>Track all user and admin actions across the portal.</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="@Url.Action("Export","ActivityLog",new{area="Admin", searchUsername=ViewBag.SearchUsername, searchActivity=ViewBag.SearchActivity, searchStatus=ViewBag.SearchStatus, dateFrom=ViewBag.DateFrom, dateTo=ViewBag.DateTo})"
+                   class="btn btn-sm btn-light fw-600" style="border-radius:10px; font-weight:600;">
+                    <i class="fa-solid fa-file-csv me-1"></i>Export CSV
+                </a>
+                <form method="post" action="@Url.Action("Clear","ActivityLog",new{area="Admin"})" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-danger" style="border-radius:10px; font-weight:600;"
+                            onclick="return confirm('Clear all activity logs? This cannot be undone.')">
+                        <i class="fa-solid fa-trash me-1"></i>Clear Logs
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Stats row -->
+        <div class="d-flex gap-3 mt-4 flex-wrap">
+            <div class="stat-card" style="background:rgba(255,255,255,0.15);">
+                <div style="font-size:22px; font-weight:700;">@totalCount</div>
+                <div style="font-size:12px; opacity:0.85;">Total Records</div>
+            </div>
+            <div class="stat-card" style="background:rgba(40,167,69,0.3);">
+                <div style="font-size:22px; font-weight:700;">@Model.Count(l => l.Status == "Success")</div>
+                <div style="font-size:12px; opacity:0.85;">Success (this page)</div>
+            </div>
+            <div class="stat-card" style="background:rgba(220,53,69,0.3);">
+                <div style="font-size:22px; font-weight:700;">@Model.Count(l => l.Status == "Failed")</div>
+                <div style="font-size:12px; opacity:0.85;">Failed (this page)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="get" action="@Url.Action("Index","ActivityLog",new{area="Admin"})">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-600 small mb-1">Username</label>
+                    <input type="text" name="searchUsername" class="form-control form-control-sm" value="@ViewBag.SearchUsername" placeholder="Search username..." style="border-radius:8px;" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-600 small mb-1">Activity</label>
+                    <select name="searchActivity" class="form-select form-select-sm" style="border-radius:8px;">
+                        <option value="">All Activities</option>
+                        @foreach(var act in new[]{"Login","Logout","Registration","Edit User","Delete User","Activated User","Deactivated User","Password Reset","Document Upload","Document Download","Document Approval","Document Rejection","Create Role","Delete Role"})
+                        {
+                            <option value="@act" selected="@(ViewBag.SearchActivity == act ? "selected" : null)">@act</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-600 small mb-1">Status</label>
+                    <select name="searchStatus" class="form-select form-select-sm" style="border-radius:8px;">
+                        <option value="">All</option>
+                        <option value="Success" selected="@(ViewBag.SearchStatus == "Success" ? "selected" : null)">Success</option>
+                        <option value="Failed" selected="@(ViewBag.SearchStatus == "Failed" ? "selected" : null)">Failed</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-600 small mb-1">From</label>
+                    <input type="date" name="dateFrom" class="form-control form-control-sm" value="@ViewBag.DateFrom" style="border-radius:8px;" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-600 small mb-1">To</label>
+                    <input type="date" name="dateTo" class="form-control form-control-sm" value="@ViewBag.DateTo" style="border-radius:8px;" />
+                </div>
+            </div>
+            <div class="mt-3 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary" style="border-radius:8px; padding:7px 20px; font-weight:600; background:linear-gradient(135deg,#183B56,#285072); border:none;">
+                    <i class="fa-solid fa-magnifying-glass me-1"></i>Search
+                </button>
+                <a href="@Url.Action("Index","ActivityLog",new{area="Admin"})" class="btn btn-sm btn-secondary" style="border-radius:8px; padding:7px 16px;">
+                    <i class="fa-solid fa-rotate-left me-1"></i>Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="log-table">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <i class="fa-solid fa-clipboard-list" style="font-size:56px; color:#adb5bd; margin-bottom:16px;"></i>
+                <h5 class="text-muted">No activity logs found.</h5>
+                <p class="text-muted small">Logs will appear here as users interact with the system.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table log-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th><i class="fa-solid fa-user me-1"></i>Username</th>
+                            <th><i class="fa-solid fa-shield-halved me-1"></i>Role</th>
+                            <th><i class="fa-solid fa-bolt me-1"></i>Activity</th>
+                            <th><i class="fa-solid fa-file-lines me-1"></i>Description</th>
+                            <th><i class="fa-solid fa-clock me-1"></i>Date & Time</th>
+                            <th><i class="fa-solid fa-globe me-1"></i>IP Address</th>
+                            <th><i class="fa-solid fa-circle-check me-1"></i>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in Model)
+                        {
+                            <tr>
+                                <td class="text-muted small">@log.Id</td>
+                                <td><strong>@log.Username</strong></td>
+                                <td><span class="badge bg-secondary">@log.Role</span></td>
+                                <td>@log.Activity</td>
+                                <td class="text-muted" style="max-width:280px;">@log.Description</td>
+                                <td class="text-muted small">@log.Timestamp.ToString("dd MMM yyyy, HH:mm:ss")</td>
+                                <td class="text-muted small font-monospace">@log.IpAddress</td>
+                                <td>
+                                    @if (log.Status == "Success")
+                                    { <span class="badge-success">✓ Success</span> }
+                                    else
+                                    { <span class="badge-failed">✗ Failed</span> }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top">
+                <small class="text-muted">Showing page <strong>@curPage</strong> of <strong>@totalPages</strong> — @totalCount total records</small>
+                <div class="d-flex gap-1">
+                    @if (curPage > 1)
+                    {
+                        <a href="@Url.Action("Index","ActivityLog",new{area="Admin",page=curPage-1,searchUsername=ViewBag.SearchUsername,searchActivity=ViewBag.SearchActivity,searchStatus=ViewBag.SearchStatus,dateFrom=ViewBag.DateFrom,dateTo=ViewBag.DateTo})" class="pagination-btn">‹ Prev</a>
+                    }
+                    @for (int i = Math.Max(1, curPage-2); i <= Math.Min(totalPages, curPage+2); i++)
+                    {
+                        <a href="@Url.Action("Index","ActivityLog",new{area="Admin",page=i,searchUsername=ViewBag.SearchUsername,searchActivity=ViewBag.SearchActivity,searchStatus=ViewBag.SearchStatus,dateFrom=ViewBag.DateFrom,dateTo=ViewBag.DateTo})"
+                           class="pagination-btn @(i == curPage ? "active" : "")">@i</a>
+                    }
+                    @if (curPage < totalPages)
+                    {
+                        <a href="@Url.Action("Index","ActivityLog",new{area="Admin",page=curPage+1,searchUsername=ViewBag.SearchUsername,searchActivity=ViewBag.SearchActivity,searchStatus=ViewBag.SearchStatus,dateFrom=ViewBag.DateFrom,dateTo=ViewBag.DateTo})" class="pagination-btn">Next ›</a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

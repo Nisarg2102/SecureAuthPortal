@@ -1,0 +1,275 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model SecureAuthPortal.Models.UserMaster
+
+<style>
+    /* ===== ENTRANCE ANIMATION ===== */
+    @@keyframes fadeSlideUp {
+        from { opacity: 0; transform: translateY(32px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .edit-card {
+        background: rgba(255,255,255,0.94);
+        backdrop-filter: blur(8px);
+        border: none;
+        border-radius: 25px;
+        box-shadow: 0px 20px 60px rgba(0,0,0,0.4);
+        padding: 40px;
+        max-width: 720px;
+        margin: 0 auto;
+        animation: fadeSlideUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .edit-header {
+        background: linear-gradient(135deg, #183B56, #285072, #4C7190);
+        color: white;
+        border-radius: 16px;
+        padding: 24px 28px;
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .edit-header::before {
+        content: '';
+        position: absolute;
+        top: -40px; right: -40px;
+        width: 130px; height: 130px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+    }
+
+    .edit-header h2 {
+        margin: 0;
+        font-weight: 700;
+        font-size: 26px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .edit-header p {
+        margin: 6px 0 0;
+        opacity: 0.85;
+        font-size: 14px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ===== FLOATING LABEL STYLES ===== */
+    .form-floating > label {
+        font-weight: 600;
+        color: #888;
+        font-size: 14px;
+    }
+
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label,
+    .form-floating > .form-select ~ label {
+        color: #285072;
+        font-weight: 600;
+    }
+
+    .form-floating > .form-control,
+    .form-floating > .form-select {
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 1rem 0.85rem 0.25rem;
+        font-size: 14px;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .form-floating > .form-control:focus,
+    .form-floating > .form-select:focus {
+        border-color: #285072;
+        box-shadow: 0 0 0 3px rgba(76,113,144,0.15);
+        outline: none;
+    }
+
+    /* Input icon wrapper */
+    .input-icon-wrap {
+        position: relative;
+    }
+
+    .input-icon-wrap .field-icon {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #4C7190;
+        font-size: 15px;
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    /* Divider */
+    .section-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 24px 0 20px;
+        color: #aaa;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .section-divider::before,
+    .section-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #e5e5e5;
+    }
+
+    /* Buttons */
+    .btn-update {
+        background: linear-gradient(135deg, #183B56, #285072);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 32px;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s;
+        box-shadow: 0 5px 20px rgba(24,59,86,0.35);
+        font-size: 15px;
+    }
+
+    .btn-update:hover {
+        background: linear-gradient(135deg, #285072, #4C7190);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(24,59,86,0.4);
+        color: white;
+    }
+
+    .btn-cancel {
+        border: 2px solid #6c757d;
+        border-radius: 10px;
+        padding: 12px 28px;
+        font-weight: 600;
+        color: #6c757d;
+        background: transparent;
+        transition: all 0.3s;
+        text-decoration: none;
+        font-size: 15px;
+        display: inline-block;
+    }
+
+    .btn-cancel:hover {
+        background: #6c757d;
+        color: white;
+        transform: translateY(-2px);
+    }
+</style>
+
+<div class="container mt-4 mb-5">
+    <div class="edit-card">
+
+        <!-- Header -->
+        <div class="edit-header">
+            <h2><i class="fa-solid fa-user-pen me-2"></i>Edit User</h2>
+            <p>Update the user's profile information below</p>
+        </div>
+
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+        <form asp-action="Edit" method="post">
+            <input type="hidden" asp-for="UserId" />
+            <input type="hidden" asp-for="Password" />
+            <input type="hidden" asp-for="CreatedDate" />
+
+            <div class="section-divider">Personal Info</div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <div class="form-floating input-icon-wrap">
+                        <input asp-for="FullName" class="form-control" placeholder="Full Name" id="floatFullName" />
+                        <label for="floatFullName"><i class="fa-solid fa-user me-1"></i> Full Name</label>
+                        <i class="fa-solid fa-id-card field-icon"></i>
+                    </div>
+                    <span asp-validation-for="FullName" class="text-danger" style="font-size:12px;"></span>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating input-icon-wrap">
+                        <input asp-for="Username" class="form-control" placeholder="Username" id="floatUsername" />
+                        <label for="floatUsername"><i class="fa-solid fa-at me-1"></i> Username</label>
+                        <i class="fa-solid fa-user-tag field-icon"></i>
+                    </div>
+                    <span asp-validation-for="Username" class="text-danger" style="font-size:12px;"></span>
+                </div>
+            </div>
+
+            <div class="section-divider">Contact Info</div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <div class="form-floating input-icon-wrap">
+                        <input asp-for="EmailId" class="form-control" placeholder="Email" id="floatEmail" />
+                        <label for="floatEmail"><i class="fa-solid fa-envelope me-1"></i> Email Address</label>
+                        <i class="fa-solid fa-envelope field-icon"></i>
+                    </div>
+                    <span asp-validation-for="EmailId" class="text-danger" style="font-size:12px;"></span>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating input-icon-wrap">
+                        <input asp-for="MobileNo" class="form-control" placeholder="Mobile" id="floatMobile" />
+                        <label for="floatMobile"><i class="fa-solid fa-phone me-1"></i> Mobile Number</label>
+                        <i class="fa-solid fa-mobile-screen field-icon"></i>
+                    </div>
+                    <span asp-validation-for="MobileNo" class="text-danger" style="font-size:12px;"></span>
+                </div>
+            </div>
+
+            <div class="section-divider">Additional Details</div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="form-floating">
+                        <input asp-for="DOB" type="date" class="form-control" placeholder="DOB" id="floatDOB" />
+                        <label for="floatDOB"><i class="fa-solid fa-calendar me-1"></i> Date of Birth</label>
+                    </div>
+                    <span asp-validation-for="DOB" class="text-danger" style="font-size:12px;"></span>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-floating">
+                        <input asp-for="Gender" class="form-control" placeholder="Gender" id="floatGender" />
+                        <label for="floatGender"><i class="fa-solid fa-venus-mars me-1"></i> Gender</label>
+                    </div>
+                    <span asp-validation-for="Gender" class="text-danger" style="font-size:12px;"></span>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-floating">
+                        <select asp-for="RoleId" asp-items="ViewBag.Roles" class="form-select" id="floatRole">
+                        </select>
+                        <label for="floatRole"><i class="fa-solid fa-shield-halved me-1"></i> Role</label>
+                    </div>
+                    <span asp-validation-for="RoleId" class="text-danger" style="font-size:12px;"></span>
+                </div>
+            </div>
+
+            <div class="d-flex gap-3 align-items-center">
+                <button type="submit" class="btn-update" id="updateBtn">
+                    <i class="fa-solid fa-floppy-disk me-2"></i>Update User
+                </button>
+                <a asp-action="UserList" class="btn-cancel">
+                    <i class="fa-solid fa-xmark me-1"></i>Cancel
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Submit spinner
+        document.querySelector('form').addEventListener('submit', function() {
+            var btn = document.getElementById('updateBtn');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving...';
+            btn.disabled = true;
+        });
+    </script>
+}

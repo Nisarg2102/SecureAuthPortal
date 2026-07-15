@@ -1,0 +1,546 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model IEnumerable<SecureAuthPortal.Models.UserMaster>
+
+@{
+    ViewData["Title"] = "User List";
+    int totalUsers  = Model.Count();
+    int totalAdmins = Model.Count(x => x.Role?.RoleName == "Admin");
+    int normalUsers = Model.Count(x => x.Role?.RoleName == "User");
+}
+
+<style>
+    .page-title {
+    font-size: 42px;
+
+    font-weight: 700;
+
+    background: linear-gradient(
+        135deg,
+        #ffffff,
+        #8ec5ff,
+        #d7e9ff
+    );
+
+    -webkit-background-clip: text;
+
+    -webkit-text-fill-color: transparent;
+
+    text-shadow:
+        0 4px 20px rgba(0,0,0,0.35);
+
+    letter-spacing: 1px;
+
+    margin-bottom: 10px;
+}
+    
+    /* Stat card entrance animation */
+    @@keyframes fadeSlideUp {
+        from { opacity: 0; transform: translateY(28px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .stat-card {
+        background: rgba(255,255,255,0.94);
+        backdrop-filter: blur(8px);
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0px 10px 30px rgba(0,0,0,0.2);
+        transition: all 0.3s;
+        animation: fadeSlideUp 0.55s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    .stat-card:nth-child(2) { animation-delay: 0.08s; }
+    .stat-card:nth-child(3) { animation-delay: 0.16s; }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0px 15px 40px rgba(0,0,0,0.3);
+    }
+
+    .stat-number {
+        font-weight: 700;
+        color: #183B56;
+    }
+
+    .search-card {
+        background: rgba(255,255,255,0.94);
+        backdrop-filter: blur(8px);
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0px 10px 30px rgba(0,0,0,0.2);
+        animation: fadeSlideUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.1s both;
+    }
+
+    .table-card {
+        background: rgba(255,255,255,0.94);
+        backdrop-filter: blur(8px);
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0px 10px 30px rgba(0,0,0,0.2);
+        overflow: hidden;
+        animation: fadeSlideUp 0.65s cubic-bezier(0.22,1,0.36,1) 0.18s both;
+    }
+
+    .form-select, .form-control {
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        transition: all 0.3s;
+    }
+
+    .form-select:focus, .form-control:focus {
+        border-color: #4C7190;
+        box-shadow: 0px 0px 10px rgba(76,113,144,0.25);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #183B56, #285072);
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s;
+        box-shadow: 0 5px 15px rgba(24,59,86,0.3);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #285072, #4C7190);
+        transform: translateY(-2px);
+        box-shadow: 0px 8px 20px rgba(24,59,86,0.35);
+    }
+
+    /* Sticky table header */
+    .table-responsive {
+        max-height: 540px;
+        overflow-y: auto;
+    }
+
+    .table thead {
+        background: linear-gradient(135deg, #183B56, #285072);
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .table thead th {
+        border: none;
+        padding: 15px;
+        font-weight: 600;
+    }
+
+    /* Alternating zebra rows */
+    .table tbody tr:nth-child(even) {
+        background: rgba(76,113,144,0.04);
+    }
+
+    .table tbody tr {
+        transition: all 0.2s;
+    }
+
+    .table tbody tr:hover {
+        background: rgba(76,113,144,0.12) !important;
+        transform: scale(1.002);
+    }
+
+    /* Removed custom button gradients to use Bootstrap default outline styles */
+
+    .badge.bg-danger {
+        background: linear-gradient(135deg, #dc3545, #c82333) !important;
+    }
+
+    .badge.bg-success {
+        background: linear-gradient(135deg, #28a745, #20c997) !important;
+    }
+</style>
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="page-title">Admin Dashboard</h2>
+        <button onclick="exportTableToCSV('users.csv')" class="btn btn-primary" style="border-radius:12px; padding:10px 22px; font-weight:600;">
+            <i class="fa-solid fa-file-csv me-2"></i>Export CSV
+        </button>
+    </div>
+
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>✘ Error!</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row mb-4">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="stat-card p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">Total Users</h6>
+                        <h2 class="stat-number" id="cnt-total" data-target="@totalUsers">0</h2>
+                    </div>
+                    <div class="fs-1">👥</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="stat-card p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">Total Admins</h6>
+                        <h2 class="stat-number" id="cnt-admins" data-target="@totalAdmins">0</h2>
+                    </div>
+                    <div class="fs-1">🛡️</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="stat-card p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">Normal Users</h6>
+                        <h2 class="stat-number" id="cnt-users" data-target="@normalUsers">0</h2>
+                    </div>
+                    <div class="fs-1">👤</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-card p-4 mb-4">
+        <form method="get" asp-action="UserList">
+            <div class="row g-3">
+                <div class="col-lg-3">
+                    <select name="searchBy" class="form-select">
+                        <option value="">Search By</option>
+                        <option value="FullName">Full Name</option>
+                        <option value="Username">Username</option>
+                        <option value="MobileNo">Mobile Number</option>
+                        <option value="Role">Role</option>
+                    </select>
+                </div>
+                <div class="col-lg-7">
+                    <input type="text" name="searchText" class="form-control" placeholder="Enter search text..." />
+                </div>
+                <div class="col-lg-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fa-solid fa-magnifying-glass me-1"></i>Search
+                        </button>
+                    </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Full Name</th>
+                            <th>Username</th>
+                            <th>Email <i class="fa-regular fa-copy ms-1" style="opacity:0.6; font-size:11px;"></i></th>
+                            <th>Mobile</th>
+                            <th>Role</th>
+                            <th>DOB</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var docsPerUser = ViewBag.DocumentsPerUser as Dictionary<long, List<SecureAuthPortal.Models.DocumentMaster>>;
+                        }
+                        @foreach(var item in Model)
+                        {
+                            var userDocs = docsPerUser != null && docsPerUser.ContainsKey(item.UserId)
+                                ? docsPerUser[item.UserId]
+                                : new List<SecureAuthPortal.Models.DocumentMaster>();
+
+                            <tr style="opacity: @(item.IsActive ? "1" : "0.6");">
+                                <td>@item.UserId</td>
+                                <td>@item.FullName</td>
+                                <td>@item.Username</td>
+                                <td>
+                                    @item.EmailId
+                                    <i class="fa-regular fa-copy copy-icon"
+                                       onclick="copyText('@item.EmailId', this)"
+                                       title="Copy email"></i>
+                                </td>
+                                <td>@item.MobileNo</td>
+                                <td>
+                                    @if(item.Role?.RoleName == "Admin")
+                                    {
+                                        <span class="badge bg-danger">@item.Role.RoleName</span>
+                                    }
+                                    else if (item.Role?.RoleName == "User")
+                                    {
+                                        <span class="badge bg-success">@item.Role.RoleName</span>
+                                    }
+                                    else if (item.Role?.RoleName == "Manager")
+                                    {
+                                        <span class="badge bg-info text-dark">@item.Role.RoleName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Unassigned</span>
+                                    }
+                                </td>
+                                <td>@item.DOB.ToShortDateString()</td>
+                                <td>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge" style="background:linear-gradient(135deg,#28a745,#20c997); font-size:11px; padding:5px 10px;">
+                                            ● Active
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge" style="background:linear-gradient(135deg,#dc3545,#c82333); font-size:11px; padding:5px 10px;">
+                                            ● Inactive
+                                        </span>
+                                    }
+                                </td>
+                                <td class="px-3">
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <a asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-outline-secondary btn-sm" title="Edit">
+                                            <i class="fa-solid fa-pen-to-square"></i> Edit
+                                        </a>
+                                        <button type="button" class="btn btn-sm @(item.IsActive ? "btn-outline-danger" : "btn-outline-success")"
+                                                onclick="toggleUserStatus('@item.UserId', '@item.FullName', @(item.IsActive ? "true" : "false"), '@(item.Role?.RoleName ?? "User")')">
+                                            <i class="fa-solid @(item.IsActive ? "fa-ban" : "fa-check-circle")"></i> @(item.IsActive ? "Deactivate" : "Activate")
+                                        </button>
+                                        @if(item.LockoutEnd.HasValue && item.LockoutEnd > DateTime.Now)
+                                        {
+                                            <form asp-action="UnblockUser" method="post" style="display:inline;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@item.UserId" />
+                                                <button type="submit" class="btn btn-outline-success btn-sm">
+                                                    <i class="fa-solid fa-unlock"></i> Unblock
+                                                </button>
+                                            </form>
+                                        }
+                                        @if(userDocs.Count > 0)
+                                        {
+                                            <button class="btn btn-outline-info btn-sm"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#docs-@item.UserId">
+                                                <i class="fa-solid fa-file-lines"></i> Docs (@userDocs.Count)
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-light text-muted border" style="font-weight:normal; padding: 7px 10px;">No Docs</span>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                            @if(userDocs.Count > 0)
+                            {
+                                <tr class="collapse" id="docs-@item.UserId">
+                                    <td colspan="9" style="background:#f8f9ff; padding:16px 24px;">
+                                        <strong style="color:#183B56;">Documents uploaded by @item.FullName:</strong>
+                                        <table class="table table-sm mt-2 mb-0" style="background:white; border-radius:10px; overflow:hidden;">
+                                            <thead style="background:#285072; color:white;">
+                                                <tr>
+                                                    <th>Type</th>
+                                                    <th>File Name</th>
+                                                    <th>Uploaded</th>
+                                                    <th>Status</th>
+                                                    <th>Download</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach(var doc in userDocs)
+                                                {
+                                                    <tr>
+                                                        <td>@doc.DocumentType</td>
+                                                        <td>@doc.FileName</td>
+                                                        <td>@doc.UploadDate.ToString("dd-MMM-yyyy")</td>
+<td>
+    @if(doc.Status == "Pending")
+    {
+        <span class="badge bg-warning">
+            Pending
+        </span>
+    }
+    else if(doc.Status == "Approved")
+    {
+        <span class="badge bg-success">
+            Approved
+        </span>
+    }
+    else
+    {
+        <span class="badge bg-danger">
+            Rejected
+        </span>
+    }
+</td>
+                                                        <td>
+                                                            <a href="/Document/ReviewDocument/@doc.DocumentId"
+                                                               class="btn btn-sm btn-outline-info" style="border-radius:8px;">
+                                                                <i class="fa-solid fa-eye"></i> View
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .copy-icon {
+        cursor: pointer;
+        color: #4C7190;
+        font-size: 13px;
+        margin-left: 6px;
+        opacity: 0.6;
+        transition: opacity 0.2s, transform 0.2s;
+        vertical-align: middle;
+    }
+    .copy-icon:hover { opacity: 1; transform: scale(1.2); }
+</style>
+
+<form id="hiddenToggleForm" method="post" asp-action="ToggleUserStatus" style="display:none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" id="hiddenToggleUserId" name="id" value="" />
+</form>
+
+<!-- Custom Deactivate/Activate Modal -->
+<div id="customToggleModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div style="background:white; border-radius:16px; overflow:hidden; width:100%; max-width:400px; box-shadow:0 20px 60px rgba(0,0,0,0.4); animation: fadeSlideUp 0.3s ease;">
+        <div id="customToggleHeader" style="padding:20px 24px; color:white;">
+            <h5 id="customToggleTitle" style="margin:0; font-weight:700;">Confirm Action</h5>
+        </div>
+        <div style="padding:24px;">
+            <p id="customToggleBody" style="margin:0; color:#333; font-size:15px;"></p>
+            <p id="customToggleWarning" style="margin:8px 0 0 0; color:#dc3545; font-size:14px; font-weight:600; display:none;"></p>
+        </div>
+        <div style="padding:0 24px 20px; display:flex; justify-content:flex-end; gap:10px;">
+            <button onclick="document.getElementById('customToggleModal').style.display='none'" style="padding:8px 20px; border-radius:10px; border:1px solid #ccc; background:white; cursor:pointer; font-weight:500;">Cancel</button>
+            <button id="customToggleConfirmBtn" onclick="document.getElementById('hiddenToggleForm').submit()" style="padding:8px 20px; border-radius:10px; border:none; color:white; font-weight:600; cursor:pointer;">
+                <span id="customToggleConfirmLabel">Confirm</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ===== TOGGLE STATUS NATIVE CONFIRM =====
+    function toggleUserStatus(userId, fullName, isActive, roleName) {
+        document.getElementById('hiddenToggleUserId').value = userId;
+        const modal  = document.getElementById('customToggleModal');
+        const header = document.getElementById('customToggleHeader');
+        const title  = document.getElementById('customToggleTitle');
+        const body   = document.getElementById('customToggleBody');
+        const warning = document.getElementById('customToggleWarning');
+        const btn    = document.getElementById('customToggleConfirmBtn');
+        const lbl    = document.getElementById('customToggleConfirmLabel');
+
+        if (isActive) {
+            header.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
+            title.innerHTML = '<i class="fa-solid fa-ban me-2"></i>Deactivate User';
+            body.innerHTML = `Are you sure you want to deactivate <strong>${fullName}</strong>?<br>This user will not be able to log in until reactivated.`;
+            if (roleName === 'Admin') {
+                warning.style.display = 'block';
+                warning.innerHTML = '⚠ Warning: This user is an Admin.';
+            } else {
+                warning.style.display = 'none';
+            }
+            btn.style.background = 'linear-gradient(135deg, #dc3545, #c82333)';
+            lbl.textContent = 'Yes, Deactivate';
+        } else {
+            header.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+            title.innerHTML = '<i class="fa-solid fa-check-circle me-2"></i>Activate User';
+            body.innerHTML = `Are you sure you want to activate <strong>${fullName}</strong>?<br>This user will be able to log in again.`;
+            warning.style.display = 'none';
+            btn.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+            lbl.textContent = 'Yes, Activate';
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    // ===== ANIMATED NUMBER COUNTER =====
+    function animateCounter(el, target, duration) {
+        var start     = 0;
+        var stepTime  = Math.max(Math.floor(duration / target), 20);
+        if (target === 0) { el.textContent = 0; return; }
+        var timer = setInterval(function() {
+            start += 1;
+            el.textContent = start;
+            if (start >= target) { el.textContent = target; clearInterval(timer); }
+        }, stepTime);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var counters = [
+            { id: 'cnt-total',  target: parseInt(document.getElementById('cnt-total').dataset.target)  || 0 },
+            { id: 'cnt-admins', target: parseInt(document.getElementById('cnt-admins').dataset.target) || 0 },
+            { id: 'cnt-users',  target: parseInt(document.getElementById('cnt-users').dataset.target)  || 0 }
+        ];
+        counters.forEach(function(c) {
+            animateCounter(document.getElementById(c.id), c.target, 800);
+        });
+    });
+
+    // ===== COPY TO CLIPBOARD =====
+    function copyText(text, iconEl) {
+        navigator.clipboard.writeText(text).then(function() {
+            iconEl.className = 'fa-solid fa-check copy-icon';
+            iconEl.style.color = '#28a745';
+            iconEl.style.opacity = '1';
+            setTimeout(function() {
+                iconEl.className = 'fa-regular fa-copy copy-icon';
+                iconEl.style.color = '';
+                iconEl.style.opacity = '';
+            }, 1800);
+        });
+    }
+
+    // ===== EXPORT TO CSV =====
+    function exportTableToCSV(filename) {
+        var rows   = document.querySelectorAll('table tbody tr:not(.collapse)');
+        var header = ['User ID','Full Name','Username','Email','Mobile','Role','DOB'];
+        var csv    = [header.join(',')];
+
+        rows.forEach(function(row) {
+            var cells = row.querySelectorAll('td');
+            if (cells.length < 7) return;
+            var rowData = [
+                cells[0].innerText.trim(),
+                '"' + cells[1].innerText.trim() + '"',
+                '"' + cells[2].innerText.trim() + '"',
+                '"' + cells[3].innerText.trim() + '"',
+                cells[4].innerText.trim(),
+                cells[5].innerText.trim(),
+                cells[6].innerText.trim()
+            ];
+            csv.push(rowData.join(','));
+        });
+
+        var blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>

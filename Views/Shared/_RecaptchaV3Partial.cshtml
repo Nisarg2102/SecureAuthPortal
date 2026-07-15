@@ -1,0 +1,65 @@
+@* Google reCAPTCHA v3 — invisible score-based verification *@
+@if (!string.IsNullOrEmpty(ViewBag.RecaptchaSiteKey as string))
+{
+    <div class="recaptcha-v3-notice mb-3">
+        <input type="hidden"
+               id="@(ViewBag.RecaptchaFieldId ?? "g-recaptcha-response")"
+               name="g-recaptcha-response" />
+        <p class="recaptcha-v3-text mb-0">
+            <i class="fa-solid fa-shield-halved me-1"></i>
+            Protected by Google reCAPTCHA v3.
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy</a>
+            &amp;
+            <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms</a>.
+        </p>
+    </div>
+
+    <script src="https://www.google.com/recaptcha/api.js?render=@ViewBag.RecaptchaSiteKey"></script>
+    <script>
+        window.recaptchaSiteKey = '@ViewBag.RecaptchaSiteKey';
+
+        window.executeRecaptchaV3 = function (action, onSuccess, onError) {
+            if (typeof grecaptcha === 'undefined') {
+                if (onError) onError('CAPTCHA could not load. Please check your connection and try again.');
+                return;
+            }
+
+            grecaptcha.ready(function () {
+                grecaptcha.execute(window.recaptchaSiteKey, { action: action })
+                    .then(function (token) { onSuccess(token); })
+                    .catch(function () {
+                        if (onError) onError('CAPTCHA verification failed. Please refresh and try again.');
+                    });
+            });
+        };
+    </script>
+
+    <style>
+        .recaptcha-v3-notice {
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: rgba(24, 59, 86, 0.06);
+            border: 1px solid rgba(24, 59, 86, 0.12);
+        }
+
+        .recaptcha-v3-text {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .recaptcha-v3-text a {
+            color: #285072;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .recaptcha-v3-text a:hover {
+            text-decoration: underline;
+        }
+
+        .grecaptcha-badge {
+            z-index: 10001 !important;
+        }
+    </style>
+}
