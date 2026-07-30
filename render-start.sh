@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Export paths so the runtime can find dotnet
-export DOTNET_ROOT=$HOME/.dotnet
+# Export paths so the runtime can find dotnet from the local directory
+export DOTNET_ROOT=$PWD/dotnet
 export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools
 
 # Run the published application
