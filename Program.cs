@@ -74,7 +74,8 @@ app.Use(async (context, next) =>
         "style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com fonts.googleapis.com cdn.jsdelivr.net; " +
         "font-src 'self' data: cdnjs.cloudflare.com fonts.gstatic.com cdn.jsdelivr.net; " +
         "img-src 'self' data: blob:; " +
-        "frame-src 'self' https://www.google.com/recaptcha/ data:; " +
+        "connect-src 'self' https://www.google.com/recaptcha/; " +
+        "frame-src 'self' https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ data:; " +
         "object-src 'none';";
 
     await next();

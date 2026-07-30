@@ -188,3 +188,4 @@
 /Users/mac/Desktop/SecureAuthPortal/obj/Debug/net10.0/SecureAuthPortal.pdb
 /Users/mac/Desktop/SecureAuthPortal/obj/Debug/net10.0/SecureAuthPortal.genruntimeconfig.cache
 /Users/mac/Desktop/SecureAuthPortal/obj/Debug/net10.0/ref/SecureAuthPortal.dll
+/Users/mac/Desktop/SecureAuthPortal/obj/Debug/net10.0/SecureAuthPortal.sourcelink.json
